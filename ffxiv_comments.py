@@ -11,7 +11,7 @@ import idautils
 import idc
 
 debug = False
-dataPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin", "out")
+dataPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "out")
 language = "en"
 
 text_segment = ida_segment.get_segm_by_name('.text')
