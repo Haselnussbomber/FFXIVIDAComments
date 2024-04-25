@@ -206,7 +206,7 @@ def get_addon_names():
         name_ea = ida_bytes.get_qword(ea)
         size = ida_bytes.get_max_strlit_length(name_ea, ida_nalt.STRTYPE_C)
         name_bytes = ida_bytes.get_strlit_contents(name_ea, size, ida_nalt.STRTYPE_C)
-        list[i] = name_bytes.decode("UTF-8")
+        list[str(i)] = name_bytes.decode("UTF-8")
         ea += 8 * 3
         i += 1
         if ea >= end_ea:
