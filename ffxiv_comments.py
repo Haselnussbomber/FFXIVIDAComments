@@ -95,6 +95,7 @@ def main() -> None:
     scan_and_comment("AgentHUD_SetMainCommandEnabledState", "E8 ?? ?? ?? ?? 40 32 FF 45 32 C0", maincommands)
     scan_and_comment("RaptureAtkModule_OpenAddon", "E8 ?? ?? ?? ?? 8B 5F 2C", addonNames)
     scan_and_comment("InventoryManager_GetInventoryContainer", "E8 ?? ?? ?? ?? 40 38 78 10", inventoryTypes)
+    scan_and_comment("SetCondition", "83 FA 68 7D 6D", conditions)
 
     update_conditions("48 8D 0D ?? ?? ?? ?? 8B D3 E8 ?? ?? ?? ?? 32 C0 48 83 C4 20", conditions)
     update_executecommand("E8 ?? ?? ?? ?? 8D 43 0A")
@@ -328,8 +329,9 @@ def update_conditions(sig, list):
     if debug:
         print(f"Conditions found at 0x{ea:X}")
 
-    for name in list:
-        id = list[name]
+    for idstr in list:
+        name = list[idstr]
+        id = int(idstr)
         if id > 0:
             ida_bytes.create_byte(ea + id, 1)
             idaapi.set_name(ea + id, f"g_Conditions_{name}", 0)

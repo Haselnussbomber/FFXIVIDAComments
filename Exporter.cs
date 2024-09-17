@@ -199,7 +199,7 @@ void ExportConditions(string outPath)
         if (name == null || processedNames.Contains(name))
             continue;
 
-        writer.WriteNumber(name, (int)value);
+        writer.WriteString(((int)value).ToString(), name);
         processedNames.Add(name);
     }
 
@@ -209,7 +209,7 @@ void ExportConditions(string outPath)
 
 public record Options
 {
-    [Option("path", HelpText = "The path to the sqpack directory.", Default = @"C:\Program Files\Square Enix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack")]
+    [Option("path", HelpText = "The path to the sqpack directory.", Default = @"C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack")]
     public string? Path { get; set; }
 
     [Option('l', "languages", HelpText = "The languages to export (de, en, fr, ja).", Default = new string[] { "en" }, Separator = ',')]
