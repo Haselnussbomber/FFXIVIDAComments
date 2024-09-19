@@ -28,7 +28,7 @@ You can add these to `dotnet run Exporter.csproj` to change some settings of the
 ### `--path`
 
 The path to the sqpack directory.  
-Default is `C:\Program Files\Square Enix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack`.
+Default is `C:\Program Files (x86)\Square Enix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack`.
 
 ### `-l`, `--languages`
 
