@@ -3,10 +3,11 @@ using ExdExport;
 using Lumina;
 using Lumina.Data;
 using Lumina.Excel;
-using Lumina.Excel.GeneratedSheets2;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
@@ -38,12 +39,12 @@ foreach (var selectedLangStr in options.Languages!)
     {
         if (langStr == selectedLangStr)
         {
-            WriteRows<Addon>(lang, langStr, (row) => (row.RowId, row.Text.ToMacroString()));
-            WriteRows<Lumina.Excel.GeneratedSheets2.Error>(lang, langStr, (row) => (row.RowId, row.Unknown0.ToMacroString()));
-            WriteRows<Lobby>(lang, langStr, (row) => (row.RowId, row.Text.ToMacroString()));
-            WriteRows<LogMessage>(lang, langStr, (row) => (row.RowId, row.Text.ToMacroString()));
-            WriteRows<MainCommand>(lang, langStr, (row) => (row.RowId, row.Name.ToMacroString()));
-            WriteRows<Quest>(lang, langStr, (row) => (row.RowId - ushort.MaxValue, row.Name.ToMacroString()));
+            WriteRows<Addon>(lang, langStr, (row) => (row.RowId, row.Text.ToString()));
+            WriteRows<Lumina.Excel.Sheets.Error>(lang, langStr, (row) => (row.RowId, row.Unknown0.ToString()));
+            WriteRows<Lobby>(lang, langStr, (row) => (row.RowId, row.Text.ToString()));
+            WriteRows<LogMessage>(lang, langStr, (row) => (row.RowId, row.Text.ToString()));
+            WriteRows<MainCommand>(lang, langStr, (row) => (row.RowId, row.Name.ToString()));
+            WriteRows<Quest>(lang, langStr, (row) => (row.RowId - ushort.MaxValue, row.Name.ToString()));
             break;
         }
     }
@@ -65,17 +66,19 @@ Console.WriteLine("Done!");
 
 // ---------------------------
 
-void WriteRows<T>(Language lang, string langStr, Func<T, (uint, string)> getkv) where T : ExcelRow
+void WriteRows<T>(Language lang, string langStr, Func<T, (uint, string)> getkv) where T : struct, IExcelRow<T>
 {
     var sheet = gameData.GetExcelSheet<T>(lang);
     if (sheet == null)
         return;
 
+    var sheetName = typeof(T).GetCustomAttribute<SheetAttribute>()!.Name;
+
     var outDir = $"out/{langStr}";
     if (!Directory.Exists(outDir))
         Directory.CreateDirectory(outDir);
 
-    var sheetOutPath = $"{outDir}/{sheet.Name}.json";
+    var sheetOutPath = $"{outDir}/{sheetName}.json";
     if (File.Exists(sheetOutPath) && new FileInfo(sheetOutPath).Length > 0)
         return;
 
@@ -93,7 +96,7 @@ void WriteRows<T>(Language lang, string langStr, Func<T, (uint, string)> getkv) 
 
     foreach (var row in sheet)
     {
-        pb.Report((double)i / sheet.RowCount);
+        pb.Report((double)i / sheet.Count);
         i++;
 
         var kv = getkv(row);
