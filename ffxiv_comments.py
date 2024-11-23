@@ -33,12 +33,12 @@ def main() -> None:
         "E8 ?? ?? ?? ?? 48 8D 4E 40 48 8B D0", # RaptureTextModule_FormatAddonTextApply
 
         "E9 ?? ?? ?? ?? 80 EA 20",                                                                   # RaptureTextModule_GetAddonText
-        "E8 ?? ?? ?? ?? 8D 4D 29",                                                                # RaptureTextModule_FormatAddonText1<string>
+        "E8 ?? ?? ?? ?? 8D 4D 2B",                                                                # RaptureTextModule_FormatAddonText1<string>
         "E8 ?? ?? ?? ?? 44 8B 4D 20",                                                                # RaptureTextModule_FormatAddonText1<string,int>
-        "E8 ?? ?? ?? ?? EB 65 B8",                                                                   # RaptureTextModule_FormatAddonText1<string,int,uint>
+        "E8 ?? ?? ?? ?? EB 67 B8",                                                                   # RaptureTextModule_FormatAddonText1<string,int,uint>
         "E8 ?? ?? ?? ?? 49 8B 4D 28 48 8B D0",                                              # RaptureTextModule_FormatAddonText1<string,string>
-        "E8 ?? ?? ?? ?? 48 8B AC 24 ?? ?? ?? ?? EB 2F",                                  # RaptureTextModule_FormatAddonText1<string,string,string>
-        "E8 ?? ?? ?? ?? 8D 4D 2A",                                                                   # RaptureTextModule_FormatAddonText1<int>
+        "E8 ?? ?? ?? ?? 4C 8B B4 24 ?? ?? ?? ?? 49 8D B7",                                  # RaptureTextModule_FormatAddonText1<string,string,string>
+        "E8 ?? ?? ?? ?? 8D 4D 2C",                                                                   # RaptureTextModule_FormatAddonText1<int>
         "E8 ?? ?? ?? ?? 80 7E 4E 00",                                                                # RaptureTextModule_FormatAddonText1<int,int>
         "E8 ?? ?? ?? ?? 8B 7D FF",                                                                # RaptureTextModule_FormatAddonText1<int,int,uint>
         "E8 ?? ?? ?? ?? EB 38 49 8B D2",                                                             # RaptureTextModule_FormatAddonText1<int,int,uint,uint>
@@ -52,14 +52,14 @@ def main() -> None:
         "E8 ?? ?? ?? ?? 48 8B 8C 24 ?? ?? ?? ?? 45 33 C9 4C 8B C0 C6 44 24",                                           # RaptureTextModule_FormatAddonText2<string,int,uint,uint,uint,uint,uint>
         "E8 ?? ?? ?? ?? 48 8B D0 48 8B 8F",                                                    # RaptureTextModule_FormatAddonText2<string,string>
                                                                                                      # RaptureTextModule_FormatAddonText2<string,string,string> # unused
-        "E8 ?? ?? ?? ?? 8B 74 24 34 48 8B D0",                                           # RaptureTextModule_FormatAddonText2<string,string,uint>
+        "E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 ?? 41 8B C7",                                           # RaptureTextModule_FormatAddonText2<string,string,uint>
                                                                                                      # RaptureTextModule_FormatAddonText2<string,string,uint,uint> # unused
-        "E8 ?? ?? ?? ?? 39 6E 08",                                     # RaptureTextModule_FormatAddonText2<string,string,uint,uint,uint>
+        "E8 ?? ?? ?? ?? 41 39 76 08",                                     # RaptureTextModule_FormatAddonText2<string,string,uint,uint,uint>
         "E8 ?? ?? ?? ?? 4C 8B 65 80 4C 8B C0", # RaptureTextModule_FormatAddonText2<string,string,string,uint,uint>
         "E8 ?? ?? ?? ?? 41 8D 55 0B",                                                                   # RaptureTextModule_FormatAddonText2<int>
         "E8 ?? ?? ?? ?? EB 51 0F B6 DB",                                                             # RaptureTextModule_FormatAddonText2<int,int>
         "E8 ?? ?? ?? ?? 48 8B D8 EB 38",                                                          # RaptureTextModule_FormatAddonText2<int,int,uint>
-        "E8 ?? ?? ?? ?? 45 33 F6 EB 39",                                                                # RaptureTextModule_FormatAddonText2<int,int,uint,uint>
+        "E8 ?? ?? ?? ?? EB 72 4C 8B 42 30",                                                                # RaptureTextModule_FormatAddonText2<int,int,uint,uint>
         "E8 ?? ?? ?? ?? 8D 4D 64",                                                                   # RaptureTextModule_FormatAddonText2<int,int,uint,uint,uint>
                                                                                                      # RaptureTextModule_FormatAddonText2<int,int,uint,uint,uint,uint> # unused
         "E8 ?? ?? ?? ?? 4C 8B 64 24 ?? 4C 8B 74 24 ?? 48 8B 9C 24",                               # RaptureTextModule_FormatAddonText2<int,int,uint,uint,uint,uint,uint>
@@ -67,8 +67,7 @@ def main() -> None:
         "E8 ?? ?? ?? ?? 48 8B 8D ?? ?? ?? ?? 45 0F B7 C6",                                        # RaptureTextModule_FormatAddonText2<int,int,string>
                                                                                                      # RaptureTextModule_FormatAddonText2<int,string,uint> # unused
 
-        "E8 ?? ?? ?? ?? 48 8B 0C FE",
-        "E9 ?? ?? ?? ?? 80 EA 20"
+        "E8 ?? ?? ?? ?? 48 8B 0C FE"
     }
 
     for idx, sig in enumerate(addonSigs):
@@ -83,22 +82,22 @@ def main() -> None:
     scan_and_comment("BattleLog_AddLogMessage", "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? F3 0F 11 44 24", logmessageRows)
     scan_and_comment("SomeLogMessage", "E8 ?? ?? ?? ?? C6 43 34 03", logmessageRows)
     scan_and_comment("BattleLog_AddActionLogMessage", "E8 ?? ?? ?? ?? F6 46 54 04", logmessageRows)
-    scan_and_comment("ConfigBase_GetConfigOption", "E8 ?? ?? ?? ?? 8D 57 53", configOptions)
+    scan_and_comment("ConfigBase_GetConfigOption", "E8 ?? ?? ?? ?? 8B 56 54", configOptions)
     scan_and_comment("ExdModule_GetSheetByIndex", "4C 8B 81 ?? ?? ?? ?? 4D 85 C0 74 07 8B C2", exl)
     scan_and_comment("ExdModule_GetRowCountBySheetIndex", "E8 ?? ?? ?? ?? 49 8D 7D 18", exl, True)
     scan_and_comment("ExdModule_GetRowBySheetIndexAndRowIndex", "E8 ?? ?? ?? ?? 48 85 C0 74 1D FF C3", exl, True)
     scan_and_comment("ExdModule_GetRowBySheetIndexAndRowId", "E8 ?? ?? ?? ?? 45 0F B6 F4", exl, True)
-    scan_and_comment("ExdModule_GetRowBySheetIndexAndRowIdAndSubRowId", "E8 ?? ?? ?? ?? 48 85 C0 74 58 48 8B 38", exl, True)
+    scan_and_comment("ExdModule_GetRowBySheetIndexAndRowIdAndSubRowId", "E8 ?? ?? ?? ?? 48 85 C0 74 2C 48 8B 00", exl, True)
     scan_and_comment("QuestManager_IsQuestAccepted", "45 33 C0 48 8D 41 18", quests)
     scan_and_comment("QuestManager_IsQuestComplete1", "E8 ?? ?? ?? ?? 88 47 19", quests)
     scan_and_comment("AgentHUD_IsMainCommandEnabled", "48 8B 81 ?? ?? ?? ?? 44 8B C2 83 E2 1F", maincommands)
     scan_and_comment("AgentHUD_SetMainCommandEnabledState", "E8 ?? ?? ?? ?? 40 32 FF 45 32 C0", maincommands)
     scan_and_comment("RaptureAtkModule_OpenAddon", "E8 ?? ?? ?? ?? 8B 5F 2C", addonNames)
-    scan_and_comment("InventoryManager_GetInventoryContainer", "E8 ?? ?? ?? ?? 40 38 78 10", inventoryTypes)
+    scan_and_comment("InventoryManager_GetInventoryContainer", "E8 ?? ?? ?? ?? 88 58 18", inventoryTypes)
     scan_and_comment("SetCondition", "83 FA 68 7D 6D", conditions)
 
     update_conditions("48 8D 0D ?? ?? ?? ?? 8B D3 E8 ?? ?? ?? ?? 32 C0 48 83 C4 20", conditions)
-    update_executecommand("E8 ?? ?? ?? ?? 8D 43 0A")
+    update_executecommand("E8 ?? ?? ?? ?? 8D 46 0A")
 
     print("Done!")
 
