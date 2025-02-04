@@ -45,6 +45,7 @@ foreach (var selectedLangStr in options.Languages!)
             WriteRows<LogMessage>(lang, langStr, (row) => (row.RowId, row.Text.ToString()));
             WriteRows<MainCommand>(lang, langStr, (row) => (row.RowId, row.Name.ToString()));
             WriteRows<Quest>(lang, langStr, (row) => (row.RowId - ushort.MaxValue, row.Name.ToString()));
+            WriteRows<Item>(lang, langStr, (row) => row.RowId == 0 ? null : (row.RowId, row.Name.ToString()));
             break;
         }
     }
@@ -53,12 +54,6 @@ foreach (var selectedLangStr in options.Languages!)
 // export root.exl
 gameData.GetFile("exd/root.exl")?.SaveFileRaw("out/root.exl");
 
-// export config options
-ExportEnum<FFXIVClientStructs.FFXIV.Client.UI.Misc.ConfigOption>("out/ConfigOptions.json");
-
-// export inventory types
-ExportEnum<FFXIVClientStructs.FFXIV.Client.Game.InventoryType>("out/InventoryTypes.json");
-
 // export conditions
 ExportConditions("out/Conditions.json");
 
@@ -66,7 +61,7 @@ Console.WriteLine("Done!");
 
 // ---------------------------
 
-void WriteRows<T>(Language lang, string langStr, Func<T, (uint, string)> getkv) where T : struct, IExcelRow<T>
+void WriteRows<T>(Language lang, string langStr, Func<T, (uint, string)?> getkv) where T : struct, IExcelRow<T>
 {
     var sheet = gameData.GetExcelSheet<T>(lang);
     if (sheet == null)
@@ -100,72 +95,8 @@ void WriteRows<T>(Language lang, string langStr, Func<T, (uint, string)> getkv) 
         i++;
 
         var kv = getkv(row);
-        writer.WriteString(kv.Item1.ToString(), kv.Item2);
-    }
-
-    writer.WriteEndObject(); // end root
-    writer.Flush();
-}
-
-void ExportEnum<TE>(string outPath) where TE : Enum
-{
-    var type = typeof(TE);
-    var underlyingType = type.GetEnumUnderlyingType().Name;
-
-    using var fileStream = File.OpenWrite(outPath);
-    using var writer = new Utf8JsonWriter(fileStream, new()
-    {
-        Indented = true,
-        Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Latin1Supplement)
-    });
-
-    writer.WriteStartObject();
-
-    var i = 0;
-    using var pb = new ProgressBar();
-    var values = Enum.GetValues(type);
-    var processedNames = new HashSet<string>();
-
-    foreach (var value in Enum.GetValues(type))
-    {
-        pb.Report((double)i / values.Length);
-        i++;
-
-        if (value == null)
-            continue;
-
-        var name = Enum.GetName(type, value);
-        if (name == null || processedNames.Contains(name))
-            continue;
-
-        switch (underlyingType)
-        {
-            case nameof(Byte):
-                writer.WriteString(((byte)value).ToString(), name);
-                break;
-
-            case nameof(SByte):
-                writer.WriteString(((sbyte)value).ToString(), name);
-                break;
-
-            case nameof(Int16):
-                writer.WriteString(((short)value).ToString(), name);
-                break;
-
-            case nameof(UInt16):
-                writer.WriteString(((ushort)value).ToString(), name);
-                break;
-
-            case nameof(Int32):
-                writer.WriteString(((int)value).ToString(), name);
-                break;
-
-            case nameof(UInt32):
-                writer.WriteString(((uint)value).ToString(), name);
-                break;
-        }
-
-        processedNames.Add(name);
+        if (kv.HasValue)
+            writer.WriteString(kv.Value.Item1.ToString(), kv.Value.Item2);
     }
 
     writer.WriteEndObject(); // end root

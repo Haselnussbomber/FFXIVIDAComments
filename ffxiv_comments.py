@@ -2,17 +2,25 @@ import os
 import codecs
 import csv
 import json
-import re
-import ida_funcs
-import ida_bytes
 import ida_allins
+import ida_bytes
+import ida_enum
+import ida_hexrays
+import ida_nalt
+import ida_segment
 import idaapi
 import idautils
 import idc
+from dataclasses import dataclass
+from typing import Optional
+
+# ---- CONFIG ----
 
 debug = False
 dataPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "out")
 language = "en"
+
+# ---- /CONFIG ----
 
 text_segment = ida_segment.get_segm_by_name('.text')
 
@@ -23,81 +31,112 @@ def main() -> None:
     logmessageRows = read_json(os.path.join(dataPath, language, "LogMessage.json"))
     quests = read_json(os.path.join(dataPath, language, "Quest.json"))
     maincommands = read_json(os.path.join(dataPath, language, "MainCommand.json"))
-    configOptions = read_json(os.path.join(dataPath, "ConfigOptions.json"))
     conditions = read_json(os.path.join(dataPath, "Conditions.json"))
-    inventoryTypes = read_json(os.path.join(dataPath, "InventoryTypes.json"))
+    items = read_json(os.path.join(dataPath, language, "Item.json"))
+
     addonNames = get_addon_names()
 
-    addonSigs = {
-        "E8 ?? ?? ?? ?? 8D 14 BF", # AgentInterface_GetAddonTextById
-        "E8 ?? ?? ?? ?? 48 8D 4E 40 48 8B D0", # RaptureTextModule_FormatAddonTextApply
+    configOptions = get_enum_member_names("Client::UI::Misc::ConfigOption")
+    inventoryTypes = get_enum_member_names("Client::Game::InventoryType")
+    agents = get_enum_member_names("Client::UI::Agent::AgentId")
 
-        "E9 ?? ?? ?? ?? 80 EA 20",                                            # RaptureTextModule_GetAddonText
-        "E8 ?? ?? ?? ?? 8D 4D 2B",                                            # RaptureTextModule_FormatAddonText1<string>
-        "E8 ?? ?? ?? ?? 44 8B 4D 20",                                         # RaptureTextModule_FormatAddonText1<string,int>
-        "E8 ?? ?? ?? ?? EB 67 B8",                                            # RaptureTextModule_FormatAddonText1<string,int,uint>
-        "E8 ?? ?? ?? ?? 49 8B 4D 28 48 8B D0",                                # RaptureTextModule_FormatAddonText1<string,string>
-        "E8 ?? ?? ?? ?? 4C 8B B4 24 ?? ?? ?? ?? 49 8D B7",                    # RaptureTextModule_FormatAddonText1<string,string,string>
-        "E8 ?? ?? ?? ?? 8D 4D 2C",                                            # RaptureTextModule_FormatAddonText1<int>
-        "E8 ?? ?? ?? ?? 80 7E 4E 00",                                         # RaptureTextModule_FormatAddonText1<int,int>
-        "E8 ?? ?? ?? ?? 8B 7D FF",                                            # RaptureTextModule_FormatAddonText1<int,int,uint>
-        "E8 ?? ?? ?? ?? EB 38 49 8B D2",                                      # RaptureTextModule_FormatAddonText1<int,int,uint,uint>
-        "E8 ?? ?? ?? ?? 8B 5C 24 44 48 8B D0",                                # RaptureTextModule_FormatAddonText1<int,string>
-        "E8 ?? ?? ?? ?? 4C 8B C5 48 89 44 24",                                # RaptureTextModule_FormatAddonText2<string>
-        "E8 ?? ?? ?? ?? EB 67 48 8B 7E 10",                                   # RaptureTextModule_FormatAddonText2<string,int>
-        "E8 ?? ?? ?? ?? 48 8B 7C 24 ?? EB 14",                                # RaptureTextModule_FormatAddonText2<string,int,uint>
-                                                                              # RaptureTextModule_FormatAddonText2<string,int,uint,uint> # unused
-        "E8 ?? ?? ?? ?? 48 8B D0 48 8D 4D E0 E8 ?? ?? ?? ?? 49 8B 9D",        # RaptureTextModule_FormatAddonText2<string,int,uint,uint,uint>
-                                                                              # RaptureTextModule_FormatAddonText2<string,int,uint,uint,uint,uint> # unused
-        "E8 ?? ?? ?? ?? 48 8B 8C 24 ?? ?? ?? ?? 45 33 C9 4C 8B C0 C6 44 24",  # RaptureTextModule_FormatAddonText2<string,int,uint,uint,uint,uint,uint>
-        "E8 ?? ?? ?? ?? 48 8B D0 48 8B 8F",                                   # RaptureTextModule_FormatAddonText2<string,string>
-                                                                              # RaptureTextModule_FormatAddonText2<string,string,string> # unused
-        "E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 ?? 41 8B C7",                    # RaptureTextModule_FormatAddonText2<string,string,uint>
-                                                                              # RaptureTextModule_FormatAddonText2<string,string,uint,uint> # unused
-        "E8 ?? ?? ?? ?? 41 39 76 08",                                         # RaptureTextModule_FormatAddonText2<string,string,uint,uint,uint>
-        "E8 ?? ?? ?? ?? 4C 8B 65 80 4C 8B C0",                                # RaptureTextModule_FormatAddonText2<string,string,string,uint,uint>
-        "E8 ?? ?? ?? ?? 41 8D 55 0B",                                         # RaptureTextModule_FormatAddonText2<int>
-        "E8 ?? ?? ?? ?? EB 51 0F B6 DB",                                      # RaptureTextModule_FormatAddonText2<int,int>
-        "E8 ?? ?? ?? ?? 48 8B D8 EB 38",                                      # RaptureTextModule_FormatAddonText2<int,int,uint>
-        "E8 ?? ?? ?? ?? EB 72 4C 8B 42 30",                                   # RaptureTextModule_FormatAddonText2<int,int,uint,uint>
-        "E8 ?? ?? ?? ?? 8D 4D 64",                                            # RaptureTextModule_FormatAddonText2<int,int,uint,uint,uint>
-                                                                              # RaptureTextModule_FormatAddonText2<int,int,uint,uint,uint,uint> # unused
-        "E8 ?? ?? ?? ?? 4C 8B 64 24 ?? 4C 8B 74 24 ?? 48 8B 9C 24",           # RaptureTextModule_FormatAddonText2<int,int,uint,uint,uint,uint,uint>
-        "E8 ?? ?? ?? ?? EB 41 41 8B F7",                                      # RaptureTextModule_FormatAddonText2<int,string>
-        "E8 ?? ?? ?? ?? 48 8B 8D ?? ?? ?? ?? 45 0F B7 C6",                    # RaptureTextModule_FormatAddonText2<int,int,string>
-                                                                              # RaptureTextModule_FormatAddonText2<int,string,uint> # unused
+    commenters = [
+        FunctionCommenter("Client::UI::Agent::AgentInterface.GetAddonTextById", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.GetAddonText", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<string,int>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<string,int,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<string,string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<string,string,string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<int>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<int,int>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<int,int,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<int,int,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<int,string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,int>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,int,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,int,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,int,uint,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,int,uint,uint,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,int,uint,uint,uint,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,string,string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,string,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,string,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,string,uint,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<string,string,string,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,int>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,int,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,int,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,int,uint,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,int,uint,uint,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,int,uint,uint,uint,uint,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,int,string>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,string,uint>", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonTextApply", addonRows),
 
-        "E8 ?? ?? ?? ?? 48 8B 0C FE"
-    }
+        FunctionCommenter("Client::UI::Agent::AgentLobby.GetLobbyText", lobbyRows),
 
-    for idx, sig in enumerate(addonSigs):
-        scan_and_comment(f"FormatAddonText{idx}", sig, addonRows)
+        FunctionCommenter("Client::UI::Shell::RaptureShellModule.PrintLogMessage", logmessageRows),
+        FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage", logmessageRows),
+        FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<uint>", logmessageRows),
+        FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<uint,uint>", logmessageRows),
+        FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<uint,uint,uint>", logmessageRows),
+        FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<string>", logmessageRows),
+        FunctionCommenter("Client::Game::BattleLog.SomeFormatLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? C6 43 34 03"),
 
-    scan_and_comment("GetLobbyText", "E8 ?? ?? ?? ?? 48 8B F0 EB 47", lobbyRows)
-    scan_and_comment("RaptureLogModule_ShowLogMessage", "E8 ?? ?? ?? ?? EB AA", logmessageRows)
-    scan_and_comment("RaptureLogModule_ShowLogMessage<uint>", "E8 ?? ?? ?? ?? 41 8B 5E 28", logmessageRows)
-    scan_and_comment("RaptureLogModule_ShowLogMessage<uint,uint>", "E8 ?? ?? ?? ?? 0F BE 4B 44", logmessageRows)
-    scan_and_comment("RaptureLogModule_ShowLogMessage<uint,uint,uint>", "E8 ?? ?? ?? ?? 40 84 ED 0F 84 ?? ?? ?? ?? 83 7F 20 00", logmessageRows)
-    scan_and_comment("RaptureLogModule_ShowLogMessage<string>", "E8 ?? ?? ?? ?? EB 68 48 8B 07", logmessageRows)
-    scan_and_comment("BattleLog_AddLogMessage", "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? F3 0F 11 44 24", logmessageRows)
-    scan_and_comment("SomeLogMessage", "E8 ?? ?? ?? ?? C6 43 34 03", logmessageRows)
-    scan_and_comment("BattleLog_AddActionLogMessage", "E8 ?? ?? ?? ?? F6 46 54 04", logmessageRows)
-    scan_and_comment("ConfigBase_GetConfigOption", "E8 ?? ?? ?? ?? 8B 56 54", configOptions)
-    scan_and_comment("ExdModule_GetSheetByIndex", "E8 ?? ?? ?? ?? FE 47 30", exl)
-    scan_and_comment("ExdModule_GetRowCountBySheetIndex", "E8 ?? ?? ?? ?? 49 8D 7D 18", exl, True)
-    scan_and_comment("ExdModule_GetRowBySheetIndexAndRowIndex", "E8 ?? ?? ?? ?? 48 85 C0 74 1D FF C3", exl, True)
-    scan_and_comment("ExdModule_GetRowBySheetIndexAndRowId", "E8 ?? ?? ?? ?? 45 0F B6 F4", exl, True)
-    scan_and_comment("ExdModule_GetRowBySheetIndexAndRowIdAndSubRowId", "E8 ?? ?? ?? ?? 48 85 C0 74 2C 48 8B 00", exl, True)
-    scan_and_comment("QuestManager_IsQuestAccepted", "45 33 C0 48 8D 41 18", quests)
-    scan_and_comment("QuestManager_IsQuestComplete1", "E8 ?? ?? ?? ?? 88 47 19", quests)
-    scan_and_comment("AgentHUD_IsMainCommandEnabled", "48 8B 81 ?? ?? ?? ?? 44 8B C2 83 E2 1F", maincommands)
-    scan_and_comment("AgentHUD_SetMainCommandEnabledState", "E8 ?? ?? ?? ?? 40 32 FF 45 32 C0", maincommands)
-    scan_and_comment("RaptureAtkModule_OpenAddon", "E8 ?? ?? ?? ?? 8B 5F 2C", addonNames)
-    scan_and_comment("InventoryManager_GetInventoryContainer", "E8 ?? ?? ?? ?? 88 58 18", inventoryTypes)
-    scan_and_comment("SetCondition", "83 FA 68 7D 6D", conditions)
+        FunctionCommenter("Common::Configuration::ConfigBase.GetConfigOption", configOptions, quotes=False),
+
+        FunctionCommenter("Common::Component::Excel::ExcelModule.GetSheetByIndex", exl),
+        FunctionCommenter("Component::Excel::ExcelModuleInterface.GetSheetByIndex", exl),
+        FunctionCommenter("Component::Exd::ExdModule.GetSheetByIndex", exl),
+        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowIndex", exl),
+        FunctionCommenter("Component::Exd::ExdModule.GetRowCountBySheetIndex", exl),
+        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowId", exl),
+        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowIdAndSubRowId", exl),
+
+        FunctionCommenter("Client::Game::UI::Journal.IsQuestAccepted", quests),
+        FunctionCommenter("Client::Game::QuestManager.IsQuestAccepted", quests),
+        FunctionCommenter("Client::Game::QuestManager.IsQuestComplete", quests),
+        FunctionCommenter("Client::Game::QuestManager.IsQuestComplete1", quests),
+        FunctionCommenter("Client::Game::UI::UIState.IsUnlockLinkUnlockedOrQuestCompleted", quests),
+
+        FunctionCommenter("Client::UI::UIModule.ExecuteMainCommand", maincommands),
+        FunctionCommenter("Client::UI::UIModule.IsMainCommandUnlocked", maincommands),
+        FunctionCommenter("Client::UI::Agent::AgentHUD.IsMainCommandEnabled", maincommands),
+        FunctionCommenter("Client::UI::Agent::AgentHUD.SetMainCommandEnabledState", maincommands),
+        FunctionCommenter("Client::UI::Agent::AgentHUD.GetMainCommandString", maincommands),
+
+        FunctionCommenter("Client::UI::RaptureAtkModule.GetStaticAddonName", addonNames),
+        FunctionCommenter("Client::UI::RaptureAtkModule.OpenAddon", addonNames),
+
+        FunctionCommenter("Client::Game::InventoryManager.GetInventoryContainer", inventoryTypes, quotes=False),
+
+        FunctionCommenter("SetCondition", conditions, quotes=False),
+
+        FunctionCommenter("Client::UI::Agent::AgentInterface.GetAgentByInternalId", agents, quotes=False),
+        FunctionCommenter("Client::UI::Agent::AgentModule.GetAgentByInternalId", agents, quotes=False),
+        FunctionCommenter("Client::UI::Agent::AgentModule.GetAgentByInternalId_2", agents, quotes=False),
+        FunctionCommenter("Client::UI::Agent::AgentModule.HideAgent", agents, quotes=False),
+        FunctionCommenter("Client::UI::Agent::AgentModule.HideAgentIfActive", agents, quotes=False),
+        FunctionCommenter("Client::UI::Agent::AgentModule.IsAgentActive", agents, quotes=False),
+
+        FunctionCommenter("GetItemName", items, id_param_index=0),
+        FunctionCommenter("GetItemIcon", items, id_param_index=0),
+        FunctionCommenter("Component::Exd::ExdModule.GetItemRowById", items, id_param_index=0),
+        FunctionCommenter("Client::Game::CurrencyManager.GetItemCount", items),
+        FunctionCommenter("Client::Game::CurrencyManager.GetItemMaxCount", items),
+
+        FunctionCommenter("ExecuteCommand", {}, id_param_index=0),
+    ]
+
+    for commenter in commenters:
+        commenter.run()
 
     update_conditions("48 8D 0D ?? ?? ?? ?? 8B D3 E8 ?? ?? ?? ?? 32 C0 48 83 C4 20", conditions)
-    update_executecommand("E8 ?? ?? ?? ?? 8D 46 0A")
 
     print("Done!")
 
@@ -120,31 +159,6 @@ def read_json(filename):
         for key, value in data.items():
             list[key] = value
     return list
-
-def read_enum(filename, name):
-    with open(filename, 'r', encoding='utf-8') as file:
-        lines = file.readlines()
-        pattern = r'^\s*(\w+)\s*=\s*(\d+)'
-        list = {}
-
-        start = False
-        for line in lines:
-            if start == False and f"enum {name}" in line:
-                start = True
-                continue
-
-            elif start == False:
-                continue
-
-            if "}" in line:
-                break
-
-            match = re.match(pattern, line)
-            if match:
-                name, id = match.groups()
-                list[str(id)] = name
-
-        return list
 
 def get_addon_names():
     start_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, "48 8D 3D ?? ?? ?? ?? 4C 8B DA", 16, idaapi.SEARCH_DOWN)
@@ -213,100 +227,123 @@ def get_addon_names():
     print(f"Found {i} addon names")
     return list
 
-def scan_and_comment(name, sig, list, renamefunc = False):
-    fn_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, sig, 16, idaapi.SEARCH_DOWN)
-    if fn_ea == idaapi.BADADDR:
-        print(f"signature failed for {name}")
-        return
+def get_enum_member_names(enum_name: str) -> dict:
+    def remove_until_first_dot(s):
+        return s.split('.', 1)[1] if '.' in s else s
 
-    inst = idautils.DecodeInstruction(fn_ea)
-    if not inst:
-        print(f"DecodeInstruction failed for {name}")
-        return
+    values = {}
 
-    if inst.get_canon_mnem() == 'jmp' or inst.get_canon_mnem() == 'call':
-        old_fn_ea = fn_ea
-        fn_ea = idc.get_operand_value(fn_ea, 0)
-        if debug:
-            print(f"resolved call for {name} 0x{old_fn_ea:x} -> 0x{fn_ea:X}")
-
-    if debug:
-        print(f"{name} found at 0x{fn_ea:X}")
-
-    for xref in idautils.XrefsTo(fn_ea):
-        xref_ea = xref.frm
-
-        if get_segm_name(xref_ea) != ".text":
+    for enum_idx in range(ida_enum.get_enum_qty()):
+        enum = ida_enum.getn_enum(enum_idx)
+        if enum_name != ida_enum.get_enum_name(enum):
             continue
 
-        func = ida_funcs.get_func(xref_ea)
-        if func is None:
-            continue
+        cur_member_value = ida_enum.get_first_enum_member(enum, 0xffffffff)
+        last_member_value = ida_enum.get_last_enum_member(enum, 0xffffffff)
+        while True:
+            cur_member_id = ida_enum.get_enum_member(enum, cur_member_value, -1, 0xffffffff)
+            member_value = ida_enum.get_enum_member_value(cur_member_id)
 
-        func_ea = func.start_ea
+            values[str(member_value)] = remove_until_first_dot(ida_enum.get_enum_member_name(cur_member_id))
 
-        id = None
-        addr = xref_ea
-        count = 0
-        while count < 10: # TODO: this should only process instructions that are part of the call... but i don't know how
-            count += 1
-            addr = idc.prev_head(addr, func_ea)
-            if addr == idaapi.BADADDR:
+            if cur_member_value == last_member_value:
                 break
 
-            inst = idautils.DecodeInstruction(addr)
-            if not inst:
+            cur_member_value = ida_enum.get_next_enum_member(enum, cur_member_value, 0xffffffff)
+
+    return values
+
+class CallArgFinder(ida_hexrays.ctree_visitor_t):
+    ea: int
+
+    def __init__(self):
+        super().__init__(ida_hexrays.CV_FAST)
+        self.calls = []
+
+    def get_arg_value(self, arg):
+        """Extracts the value of an argument based on its expression type."""
+        if arg.op == ida_hexrays.cot_num: # Constant number, we don't need more than that
+            return str(arg.n._value)
+        return ""
+
+    def visit_expr(self, expr):
+        if expr.op == ida_hexrays.cot_call and expr.ea == self.ea: # Check if it's a function call
+            call_info = {
+                "ea": expr.ea,
+                "callee": str(expr.x), # Get function name or expression
+                "args": []
+            }
+
+            for arg in expr.a:
+                call_info["args"].append(self.get_arg_value(arg))
+
+            self.calls.append(call_info)
+        return 0
+
+@dataclass
+class FunctionCommenter:
+    name: str
+    datalist: any
+    id_param_index: Optional[int] = 1
+    pattern: Optional[str] = False
+    renamefunc: Optional[bool] = False
+    quotes: Optional[bool] = True
+
+    ea: int = 0
+
+    def __post_init__(self):
+        if self.pattern:
+            self.ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, self.pattern, 16, idaapi.SEARCH_DOWN)
+        else:
+            self.ea = idc.get_name_ea(text_segment.start_ea, self.name)
+
+    def get_comment(self, id: int):
+        if id in self.datalist:
+            if self.quotes:
+                return f"\"{self.datalist[id]}\" ({id})"
+            else:
+                return f"{self.datalist[id]} ({id})"
+
+        return str(id)
+
+    def run(self):
+        if self.ea == idaapi.BADADDR:
+            print(f"Could not find ea for {self.name}")
+            return
+
+        if self.pattern:
+            print(f"Processing {self.name} ({self.pattern})")
+        else:
+            print(f"Processing {self.name}")
+
+        for xref in idautils.XrefsTo(self.ea):
+            if idc.get_segm_name(xref.frm) != ".text":
                 continue
 
-            if inst.get_canon_mnem() == 'jz':
-                break
+            cfunc = ida_hexrays.decompile(xref.frm)
+            if not cfunc:
+                print(f"Failed to decompile {hex(xref.frm)}")
+                continue
 
-            if inst.get_canon_mnem() == 'mov' and idc.get_operand_type(addr, 0) == idc.o_reg and idc.get_operand_type(addr, 1) == idc.o_imm:
-                # TODO: resolve "mov     edx, ebp" where ebp holds the id
-                reg_names = ["edx"]
-                if name == "BattleLog_AddLogMessage" or name == "BattleLog_AddActionLogMessage":
-                    reg_names = ["ecx"]
-                if name == "QuestManager_IsQuestComplete1":
-                    reg_names = ["edx", "ebx", "esi", "ebp"]
-                if name == "QuestManager_IsQuestAccepted":
-                    reg_names = ["ebx", "edi", "esi"]
+            visitor = CallArgFinder()
+            visitor.ea = xref.frm
+            visitor.apply_to(cfunc.body, None)
 
-                if idaapi.get_reg_name(idc.get_operand_value(addr, 0), 4) in reg_names:
-                    id = idc.get_operand_value(addr, 1)
-                    break
+            for call in visitor.calls:
+                if call['ea'] == idaapi.BADADDR:
+                    continue
 
-        if id is None:
-            if debug:
-                print(f"[{name}] id not found for xref {xref_ea:X}")
-            continue
+                if debug:
+                    print(f"Processing function call @ {hex(call['ea'])} ({self.name})")
 
-        id = str(id)
+                id = 0
+                for i, arg in enumerate(call["args"]):
+                    if i == self.id_param_index:
+                        id = arg
+                        break
 
-        if not id in list:
-            if debug:
-                print(f"[{name}] id {id} not found for xref {xref_ea:X}")
-            continue
-
-        # set comment to instruction
-        idc.set_cmt(xref_ea, f"\"{list[id]}\"", 0)
-
-        if renamefunc:
-            existingName = ida_funcs.get_func_name(func_ea)
-
-            if existingName.startswith("sub_"):
-                size = ida_funcs.calc_func_size(func)
-
-                if name == "ExdModule_GetRowBySheetIndexAndRowId" and size >= 49 and size <= 53:
-                    idaapi.set_name(func_ea, f"Component::Exd::ExdModule_Get{list[id]}ById", 0)
-
-                elif  name == "ExdModule_GetRowBySheetIndexAndRowIndex" and size >= 49 and size <= 53:
-                    idaapi.set_name(func_ea, f"Component::Exd::ExdModule_Get{list[id]}ByIndex", 0)
-
-                elif name == "ExdModule_GetRowCountBySheetIndex" and size == 24:
-                    idaapi.set_name(func_ea, f"Component::Exd::ExdModule_Get{list[id]}::rowCount", 0)
-
-                elif debug:
-                    print(f"[{name}] {func_ea:X} with size {size} not touched")
+                if id != 0:
+                    idc.set_cmt(call['ea'], self.get_comment(id), 0)
 
 def update_conditions(sig, list):
     ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, sig, 16, idaapi.SEARCH_DOWN)
@@ -334,69 +371,6 @@ def update_conditions(sig, list):
         if id > 0:
             ida_bytes.create_byte(ea + id, 1)
             idaapi.set_name(ea + id, f"g_Conditions_{name}", 0)
-
-def update_executecommand(sig):
-    fn_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, sig, 16, idaapi.SEARCH_DOWN)
-    if fn_ea == idaapi.BADADDR:
-        print(f"signature failed for ExecuteCommand")
-        return
-
-    inst = idautils.DecodeInstruction(fn_ea)
-    if not inst:
-        print(f"DecodeInstruction failed for ExecuteCommand")
-        return
-
-    if inst.get_canon_mnem() == 'jmp' or inst.get_canon_mnem() == 'call':
-        old_fn_ea = fn_ea
-        fn_ea = idc.get_operand_value(fn_ea, 0)
-        if debug:
-            print(f"resolved call for ExecuteCommand 0x{old_fn_ea:x} -> 0x{fn_ea:X}")
-
-    if debug:
-        print(f"ExecuteCommand found at 0x{fn_ea:X}")
-
-    for xref in idautils.XrefsTo(fn_ea):
-        xref_ea = xref.frm
-
-        if get_segm_name(xref_ea) != ".text":
-            continue
-
-        func = ida_funcs.get_func(xref_ea)
-        if func is None:
-            continue
-
-        func_ea = func.start_ea
-
-        id = None
-        addr = xref_ea
-        count = 0
-        while count < 5:
-            count += 1
-            addr = idc.prev_head(addr, func_ea)
-            if addr == idaapi.BADADDR:
-                break
-
-            inst = idautils.DecodeInstruction(addr)
-            if not inst:
-                continue
-
-            if inst.get_canon_mnem() == 'jz':
-                break
-
-            if inst.get_canon_mnem() == 'mov' and idc.get_operand_type(addr, 0) == idc.o_reg and idc.get_operand_type(addr, 1) == idc.o_imm:
-                reg_names = ["ecx"]
-
-                if idaapi.get_reg_name(idc.get_operand_value(addr, 0), 4) in reg_names:
-                    id = idc.get_operand_value(addr, 1)
-                    break
-
-        if id is None:
-            if debug:
-                print(f"[ExecuteCommand] id not found for xref {xref_ea:X}")
-            continue
-
-        # set comment to instruction
-        idc.set_cmt(xref_ea, f"{id}", 0)
 
 if __name__ == "__main__":
     main()
