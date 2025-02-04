@@ -1,6 +1,4 @@
 import os
-import codecs
-import csv
 import json
 import ida_allins
 import ida_bytes
@@ -25,7 +23,6 @@ language = "en"
 text_segment = ida_segment.get_segm_by_name('.text')
 
 def main() -> None:
-    exl = read_csv(os.path.join(dataPath, "root.exl"), 1, 0)
     addonRows = read_json(os.path.join(dataPath, language, "Addon.json"))
     lobbyRows = read_json(os.path.join(dataPath, language, "Lobby.json"))
     logmessageRows = read_json(os.path.join(dataPath, language, "LogMessage.json"))
@@ -36,6 +33,7 @@ def main() -> None:
 
     addonNames = get_addon_names()
 
+    sheetNames = get_enum_member_names("Component::Exd::SheetsEnum")
     configOptions = get_enum_member_names("Client::UI::Misc::ConfigOption")
     inventoryTypes = get_enum_member_names("Client::Game::InventoryType")
     agents = get_enum_member_names("Client::UI::Agent::AgentId")
@@ -90,13 +88,11 @@ def main() -> None:
 
         FunctionCommenter("Common::Configuration::ConfigBase.GetConfigOption", configOptions, quotes=False),
 
-        FunctionCommenter("Common::Component::Excel::ExcelModule.GetSheetByIndex", exl),
-        FunctionCommenter("Component::Excel::ExcelModuleInterface.GetSheetByIndex", exl),
-        FunctionCommenter("Component::Exd::ExdModule.GetSheetByIndex", exl),
-        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowIndex", exl),
-        FunctionCommenter("Component::Exd::ExdModule.GetRowCountBySheetIndex", exl),
-        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowId", exl),
-        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowIdAndSubRowId", exl),
+        FunctionCommenter("Component::Exd::ExdModule.GetSheetByIndex", sheetNames, quotes=False),
+        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowIndex", sheetNames, quotes=False),
+        FunctionCommenter("Component::Exd::ExdModule.GetRowCountBySheetIndex", sheetNames, quotes=False),
+        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowId", sheetNames, quotes=False),
+        FunctionCommenter("Component::Exd::ExdModule.GetRowBySheetIndexAndRowIdAndSubRowId", sheetNames, quotes=False),
 
         FunctionCommenter("Client::Game::UI::Journal.IsQuestAccepted", quests),
         FunctionCommenter("Client::Game::QuestManager.IsQuestAccepted", quests),
@@ -139,18 +135,6 @@ def main() -> None:
     update_conditions("48 8D 0D ?? ?? ?? ?? 8B D3 E8 ?? ?? ?? ?? 32 C0 48 83 C4 20", conditions)
 
     print("Done!")
-
-def read_csv(filename, indexColumn, textColumn):
-    list = {}
-    headerSkipped = False
-    with codecs.open(filename, "r", encoding="utf-8", errors="replace") as csvfile:
-        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        for row in reader:
-            if not headerSkipped:
-                headerSkipped = True
-                continue
-            list[row[indexColumn]] = row[textColumn]
-    return list
 
 def read_json(filename):
     list = {}

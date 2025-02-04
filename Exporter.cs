@@ -51,9 +51,6 @@ foreach (var selectedLangStr in options.Languages!)
     }
 }
 
-// export root.exl
-gameData.GetFile("exd/root.exl")?.SaveFileRaw("out/root.exl");
-
 // export conditions
 ExportConditions("out/Conditions.json");
 
