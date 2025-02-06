@@ -85,6 +85,8 @@ def main() -> None:
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<uint,uint,uint>", logmessageRows),
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<string>", logmessageRows),
         FunctionCommenter("Client::Game::BattleLog.SomeFormatLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? C6 43 34 03"),
+        FunctionCommenter("Client::Game::BattleLog.SomeShowBattleCharaLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 32 C0 EB 59"),
+        FunctionCommenter("Client::Game::BattleLog.AddActionLogMessage", logmessageRows, id_param_index=0),
 
         FunctionCommenter("Common::Configuration::ConfigBase.GetConfigOption", configOptions, quotes=False),
 
@@ -278,6 +280,8 @@ class FunctionCommenter:
     def __post_init__(self):
         if self.pattern:
             self.ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, self.pattern, 16, idaapi.SEARCH_DOWN)
+            if idc.get_operand_type(self.ea, 0) in [idc.o_near, idc.o_far]:
+                self.ea = idc.get_operand_value(self.ea, 0)
         else:
             self.ea = idc.get_name_ea(text_segment.start_ea, self.name)
 
