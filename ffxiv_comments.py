@@ -39,7 +39,10 @@ def main() -> None:
     agents = get_enum_member_names("Client::UI::Agent::AgentId")
 
     commenters = [
+        FunctionCommenter("Client::UI::Agent::AgentContext.AddMenuItem2", addonRows),
         FunctionCommenter("Client::UI::Agent::AgentInterface.GetAddonTextById", addonRows),
+        FunctionCommenter("Client::UI::Agent::AgentInterface.FormatAddonTextInt", addonRows),
+        FunctionCommenter("Client::UI::Agent::AgentInterface.FormatAddonTextString", addonRows),
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.GetAddonText", addonRows),
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<string>", addonRows),
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText1<string,int>", addonRows),
@@ -116,6 +119,7 @@ def main() -> None:
         FunctionCommenter("SetCondition", conditions, quotes=False),
 
         FunctionCommenter("Client::UI::Agent::AgentInterface.GetAgentByInternalId", agents, quotes=False),
+        FunctionCommenter("Client::UI::Agent::AgentInterface.GetAgentByInternalId_2", agents, quotes=False),
         FunctionCommenter("Client::UI::Agent::AgentModule.GetAgentByInternalId", agents, quotes=False),
         FunctionCommenter("Client::UI::Agent::AgentModule.GetAgentByInternalId_2", agents, quotes=False),
         FunctionCommenter("Client::UI::Agent::AgentModule.HideAgent", agents, quotes=False),
@@ -129,6 +133,8 @@ def main() -> None:
         FunctionCommenter("Client::Game::CurrencyManager.GetItemMaxCount", items),
 
         FunctionCommenter("ExecuteCommand", {}, id_param_index=0),
+        FunctionCommenter("Client::UI::Misc::FlagStatusModule_GetUIFlag", {}),
+        FunctionCommenter("Client::UI::Misc::FlagStatusModule_SetUIFlag", {}),
     ]
 
     for commenter in commenters:
