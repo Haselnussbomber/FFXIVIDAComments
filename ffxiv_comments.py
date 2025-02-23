@@ -78,6 +78,9 @@ def main() -> None:
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,int,string>", addonRows),
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,string,uint>", addonRows),
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonTextApply", addonRows),
+        FunctionCommenter("Client::UI::Misc::RaptureTextModule.SomeUnk1FormatAddonText2", addonRows, pattern="E8 ?? ?? ?? ?? EB 10 41 FF D0"),
+        FunctionCommenter("SomeGlobalAddonFormatFn", addonRows, id_param_index=0, pattern="E8 ?? ?? ?? ?? 40 84 F6 74 6A"),
+        FunctionCommenter("SomeOtherGlobalAddonFormatFn", addonRows, id_param_index=0, pattern="E8 ?? ?? ?? ?? 48 8B 45 A0 48 85 C0"),
 
         FunctionCommenter("Client::UI::Agent::AgentLobby.GetLobbyText", lobbyRows),
 
