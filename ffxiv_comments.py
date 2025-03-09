@@ -144,6 +144,7 @@ def main() -> None:
         commenter.run()
 
     update_conditions("48 8D 0D ?? ?? ?? ?? 8B D3 E8 ?? ?? ?? ?? 32 C0 48 83 C4 20", conditions)
+    update_lua_functions()
 
     print("Done!")
 
@@ -158,7 +159,7 @@ def read_json(filename):
 def get_addon_names():
     start_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, "48 8D 3D ?? ?? ?? ?? 4C 8B DA", 16, idaapi.SEARCH_DOWN)
     if start_ea == idaapi.BADADDR:
-        print("could not find addon names signature")
+        print("Could not find addon names signature")
         return
 
     inst = idautils.DecodeInstruction(start_ea)
@@ -182,7 +183,7 @@ def get_addon_names():
 
     end_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, "4C 8B CF 48 8D 1D ?? ?? ?? ??", 16, idaapi.SEARCH_DOWN)
     if end_ea == idaapi.BADADDR:
-        print("could not find addon names signature")
+        print("Could not find addon names signature")
         return
 
     end_ea += 3
@@ -210,10 +211,7 @@ def get_addon_names():
     i = 0
     ea = start_ea
     while ida_bytes.get_qword(ea) != 0:
-        name_ea = ida_bytes.get_qword(ea)
-        size = ida_bytes.get_max_strlit_length(name_ea, ida_nalt.STRTYPE_C)
-        name_bytes = ida_bytes.get_strlit_contents(name_ea, size, ida_nalt.STRTYPE_C)
-        list[str(i)] = name_bytes.decode("UTF-8")
+        list[str(i)] = read_cstr(ida_bytes.get_qword(ea))
         ea += 8 * 3
         i += 1
         if ea >= end_ea:
@@ -221,6 +219,11 @@ def get_addon_names():
 
     print(f"Found {i} addon names")
     return list
+
+def read_cstr(ea):
+    size = ida_bytes.get_max_strlit_length(ea, ida_nalt.STRTYPE_C)
+    name_bytes = ida_bytes.get_strlit_contents(ea, size, ida_nalt.STRTYPE_C)
+    return name_bytes.decode("UTF-8")
 
 def get_enum_member_names(enum_name: str) -> dict:
     def remove_until_first_dot(s):
@@ -257,8 +260,10 @@ class CallArgFinder(ida_hexrays.ctree_visitor_t):
 
     def get_arg_value(self, arg):
         """Extracts the value of an argument based on its expression type."""
-        if arg.op == ida_hexrays.cot_num: # Constant number, we don't need more than that
+        if arg.op == ida_hexrays.cot_num: # Constant number
             return str(arg.n._value)
+        if arg.op == ida_hexrays.cot_obj: # Object ea
+            return arg.obj_ea
         return ""
 
     def visit_expr(self, expr):
@@ -305,7 +310,7 @@ class FunctionCommenter:
 
     def run(self):
         if self.ea == idaapi.BADADDR:
-            print(f"Could not find ea for {self.name}")
+            print(f"Couldn't find ea for {self.name}")
             return
 
         if self.pattern:
@@ -345,19 +350,19 @@ class FunctionCommenter:
 def update_conditions(sig, list):
     ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, sig, 16, idaapi.SEARCH_DOWN)
     if ea == idaapi.BADADDR:
-        print(f"signature failed for Conditions")
+        print("Signature failed for Conditions")
         return
 
     inst = idautils.DecodeInstruction(ea)
     if not inst:
-        print(f"DecodeInstruction failed for Conditions")
+        print("DecodeInstruction failed for Conditions")
         return
 
     if inst.get_canon_mnem() == 'lea':
         old_ea = ea
         ea = idc.get_operand_value(ea, 1)
         if debug:
-            print(f"resolved lea for Conditions 0x{old_ea:x} -> 0x{ea:X}")
+            print(f"Resolved lea for Conditions 0x{old_ea:x} -> 0x{ea:X}")
 
     if debug:
         print(f"Conditions found at 0x{ea:X}")
@@ -368,6 +373,37 @@ def update_conditions(sig, list):
         if id > 0:
             ida_bytes.create_byte(ea + id, 1)
             idaapi.set_name(ea + id, f"g_Conditions_{name}", 0)
+
+def update_lua_functions():
+    ea = idc.get_name_ea(text_segment.start_ea, "Common::Lua::LuaState.SetFunctionField")
+    if ea == idaapi.BADADDR:
+        print("Couldn't find Common::Lua::LuaState_SetFunctionField")
+        return
+
+    for xref in idautils.XrefsTo(ea):
+        if idc.get_segm_name(xref.frm) != ".text":
+            continue
+
+        cfunc = ida_hexrays.decompile(xref.frm)
+        if not cfunc:
+            print(f"Failed to decompile {hex(xref.frm)}")
+            continue
+
+        visitor = CallArgFinder()
+        visitor.ea = xref.frm
+        visitor.apply_to(cfunc.body, None)
+
+        for call in visitor.calls:
+            if call['ea'] == idaapi.BADADDR:
+                continue
+
+            if debug:
+                print(f"Processing function call @ {hex(call['ea'])} (LuaState_SetFunctionField)")
+
+            for i, arg in enumerate(call["args"]):
+                if i == 2 and arg != "":
+                    idaapi.set_cmt(xref.frm, f"\"{read_cstr(arg)}\"", 0)
+                    break
 
 if __name__ == "__main__":
     main()
