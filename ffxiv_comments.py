@@ -143,7 +143,6 @@ def main() -> None:
     for commenter in commenters:
         commenter.run()
 
-    update_conditions("48 8D 0D ?? ?? ?? ?? 8B D3 E8 ?? ?? ?? ?? 32 C0 48 83 C4 20", conditions)
     update_lua_functions()
 
     print("Done!")
@@ -346,33 +345,6 @@ class FunctionCommenter:
 
                 if id != 0:
                     idc.set_cmt(call['ea'], self.get_comment(id), 0)
-
-def update_conditions(sig, list):
-    ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, sig, 16, idaapi.SEARCH_DOWN)
-    if ea == idaapi.BADADDR:
-        print("Signature failed for Conditions")
-        return
-
-    inst = idautils.DecodeInstruction(ea)
-    if not inst:
-        print("DecodeInstruction failed for Conditions")
-        return
-
-    if inst.get_canon_mnem() == 'lea':
-        old_ea = ea
-        ea = idc.get_operand_value(ea, 1)
-        if debug:
-            print(f"Resolved lea for Conditions 0x{old_ea:x} -> 0x{ea:X}")
-
-    if debug:
-        print(f"Conditions found at 0x{ea:X}")
-
-    for idstr in list:
-        name = list[idstr]
-        id = int(idstr)
-        if id > 0:
-            ida_bytes.create_byte(ea + id, 1)
-            idaapi.set_name(ea + id, f"g_Conditions_{name}", 0)
 
 def update_lua_functions():
     ea = idc.get_name_ea(text_segment.start_ea, "Common::Lua::LuaState.SetFunctionField")
