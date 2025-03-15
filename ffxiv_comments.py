@@ -106,6 +106,7 @@ def main() -> None:
         FunctionCommenter("Client::Game::QuestManager.IsQuestAccepted", quests),
         FunctionCommenter("Client::Game::QuestManager.IsQuestComplete", quests),
         FunctionCommenter("Client::Game::QuestManager.IsQuestComplete1", quests),
+        FunctionCommenter("Client::Game::QuestManager.GetQuestSequence", quests, id_param_index=0),
         FunctionCommenter("Client::Game::UI::UIState.IsUnlockLinkUnlockedOrQuestCompleted", quests),
 
         FunctionCommenter("Client::UI::UIModule.ExecuteMainCommand", maincommands),
