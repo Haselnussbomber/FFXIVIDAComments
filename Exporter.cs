@@ -70,11 +70,7 @@ void WriteRows<T>(Language lang, string langStr, Func<T, (uint, string)?> getkv)
     if (!Directory.Exists(outDir))
         Directory.CreateDirectory(outDir);
 
-    var sheetOutPath = $"{outDir}/{sheetName}.json";
-    if (File.Exists(sheetOutPath) && new FileInfo(sheetOutPath).Length > 0)
-        return;
-
-    using var fileStream = File.OpenWrite(sheetOutPath);
+    using var fileStream = File.Create($"{outDir}/{sheetName}.json");
     using var writer = new Utf8JsonWriter(fileStream, new()
     {
         Indented = true,
