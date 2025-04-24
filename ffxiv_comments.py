@@ -120,7 +120,7 @@ def main() -> None:
 
         FunctionCommenter("Client::Game::InventoryManager.GetInventoryContainer", inventoryTypes, quotes=False),
 
-        FunctionCommenter("SetCondition", conditions, quotes=False),
+        FunctionCommenter("Client::Game::Conditions.SetCondition", conditions, quotes=False),
 
         FunctionCommenter("Client::UI::Agent::AgentInterface.GetAgentByInternalId", agents, quotes=False),
         FunctionCommenter("Client::UI::Agent::AgentInterface.GetAgentByInternalId_2", agents, quotes=False),
