@@ -9,8 +9,9 @@ This script will add comments on various calls in IDA, for example:
 - MainCommand names on `AgentHUD_IsMainCommandEnabled/SetMainCommandEnabledState`
 - Quest names on `QuestManager_IsQuestAccepted/IsQuestComplete1`
 - Addon names on `RaptureAtkModule_OpenAddon`
+- Condition names on `Conditions.SetCondition`
 
-It also gives conditions a proper name (prefixed with `g_Conditions_`) and adds a comment to ExecuteCommand with the used op code.
+It also adds a comment to ExecuteCommand with the used op code.
 
 Obviously, the script needs data. That's where the Exporter comes in. It exports all the text and enum values the script needs as json (in the `out/` directory).
 
