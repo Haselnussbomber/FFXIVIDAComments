@@ -94,6 +94,7 @@ def main() -> None:
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<string>", logmessageRows),
         FunctionCommenter("Client::Game::BattleLog.SomeFormatLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? C6 43 34 03"),
         FunctionCommenter("Client::Game::BattleLog.SomeShowBattleCharaLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 32 C0 EB 59"),
+        FunctionCommenter("Client::Game::InstanceContent::ContentDirector.ShowLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 80 A4 FB"),
         FunctionCommenter("Client::Game::BattleLog.AddActionLogMessage", logmessageRows, id_param_index=0),
 
         FunctionCommenter("Common::Configuration::ConfigBase.GetConfigOption", configOptions, quotes=False),
