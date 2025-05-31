@@ -46,6 +46,7 @@ foreach (var selectedLangStr in options.Languages!)
             WriteRows<MainCommand>(lang, langStr, (row) => (row.RowId, row.Name.ToString()));
             WriteRows<Quest>(lang, langStr, (row) => (row.RowId - ushort.MaxValue, row.Name.ToString()));
             WriteRows<Item>(lang, langStr, (row) => row.RowId == 0 ? null : (row.RowId, row.Name.ToString()));
+            WriteRows<Status>(lang, langStr, (row) => row.RowId == 0 ? null : (row.RowId, row.Name.ToString()));
             break;
         }
     }

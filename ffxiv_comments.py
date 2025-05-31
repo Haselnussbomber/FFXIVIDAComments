@@ -30,6 +30,7 @@ def main() -> None:
     maincommands = read_json(os.path.join(dataPath, language, "MainCommand.json"))
     conditions = read_json(os.path.join(dataPath, "Conditions.json"))
     items = read_json(os.path.join(dataPath, language, "Item.json"))
+    statuses = read_json(os.path.join(dataPath, language, "Status.json"))
 
     addonNames = get_addon_names()
 
@@ -122,6 +123,9 @@ def main() -> None:
         FunctionCommenter("Client::Game::InventoryManager.GetInventoryContainer", inventoryTypes, quotes=False),
 
         FunctionCommenter("Client::Game::Conditions.SetCondition", conditions, quotes=False),
+
+        FunctionCommenter("Client::Game::Character::BattleChara.HasStatus", statuses, quotes=False, pattern="E8 ?? ?? ?? ?? 38 43 2D"),
+        FunctionCommenter("Client::Game::StatusManager.HasStatus", statuses, quotes=False),
 
         FunctionCommenter("Client::UI::Agent::AgentInterface.GetAgentByInternalId", agents, quotes=False),
         FunctionCommenter("Client::UI::Agent::AgentInterface.GetAgentByInternalId_2", agents, quotes=False),
