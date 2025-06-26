@@ -39,6 +39,7 @@ def main() -> None:
     inventoryTypes = get_enum_member_names("Client::Game::InventoryType")
     agents = get_enum_member_names("Client::UI::Agent::AgentId")
     eventTypes = get_enum_member_names("Component::GUI::AtkEventType")
+    inputIds = get_enum_member_names("Client::System::Input::InputId")
 
     commenters = [
         FunctionCommenter("Client::UI::Agent::AgentContext.AddMenuItem2", addonRows),
@@ -111,6 +112,11 @@ def main() -> None:
         FunctionCommenter("Client::Game::QuestManager.IsQuestComplete1", quests),
         FunctionCommenter("Client::Game::QuestManager.GetQuestSequence", quests, id_param_index=0),
         FunctionCommenter("Client::Game::UI::UIState.IsUnlockLinkUnlockedOrQuestCompleted", quests),
+
+        FunctionCommenter("Client::System::Input::InputData.IsInputIdDown", inputIds),
+        FunctionCommenter("Client::System::Input::InputData.IsInputIdPressed", inputIds),
+        FunctionCommenter("Client::System::Input::InputData.IsInputIdHeld", inputIds),
+        FunctionCommenter("Client::System::Input::InputData.IsInputIdReleased", inputIds),
 
         FunctionCommenter("Client::UI::UIModule.ExecuteMainCommand", maincommands),
         FunctionCommenter("Client::UI::UIModule.IsMainCommandUnlocked", maincommands),
