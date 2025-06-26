@@ -151,12 +151,14 @@ def main() -> None:
         FunctionCommenter("Component::GUI::AtkUnitBase.RegisterEvent", eventTypes),
         FunctionCommenter("Component::GUI::AtkAddonControl.RegisterEvent", eventTypes),
         FunctionCommenter("Component::GUI::AtkSimpleTween.RegisterEvent", eventTypes),
+        FunctionCommenter("Component::GUI::AtkStage.RegisterViewportEvent", eventTypes),
 
         FunctionCommenter("Component::GUI::AtkEventManager.UnregisterEvent", eventTypes),
         FunctionCommenter("Component::GUI::AtkResNode.UnregisterEvent", eventTypes),
         FunctionCommenter("Component::GUI::AtkUnitBase.UnregisterEvent", eventTypes),
         FunctionCommenter("Component::GUI::AtkAddonControl.UnregisterEvent", eventTypes),
         FunctionCommenter("Component::GUI::AtkSimpleTween.UnregisterEvent", eventTypes),
+        FunctionCommenter("Component::GUI::AtkStage.UnregisterViewportEvent", eventTypes),
     ]
 
     for commenter in commenters:
