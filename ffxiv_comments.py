@@ -82,7 +82,7 @@ def main() -> None:
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonText2<int,string,uint>", addonRows),
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.FormatAddonTextApply", addonRows),
         FunctionCommenter("Client::UI::Misc::RaptureTextModule.SomeUnk1FormatAddonText2", addonRows, pattern="E8 ?? ?? ?? ?? EB 10 41 FF D0"),
-        FunctionCommenter("SomeGlobalAddonFormatFn", addonRows, id_param_index=0, pattern="E8 ?? ?? ?? ?? 40 84 F6 74 6A"),
+        FunctionCommenter("SomeGlobalAddonFormatFn", addonRows, id_param_index=0, pattern="E8 ?? ?? ?? ?? 8B 47 ?? 05"),
         FunctionCommenter("SomeOtherGlobalAddonFormatFn", addonRows, id_param_index=0, pattern="E8 ?? ?? ?? ?? 48 8B 45 A0 48 85 C0"),
 
         FunctionCommenter("Client::UI::Agent::AgentLobby.GetLobbyText", lobbyRows),
@@ -97,6 +97,8 @@ def main() -> None:
         FunctionCommenter("Client::Game::BattleLog.SomeShowBattleCharaLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 32 C0 EB 59"),
         FunctionCommenter("Client::Game::InstanceContent::ContentDirector.ShowLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 80 A4 FB"),
         FunctionCommenter("Client::Game::BattleLog.AddActionLogMessage", logmessageRows, id_param_index=0),
+        FunctionCommenter("AnotherShowLogMessage", logmessageRows, pattern="E9 ?? ?? ?? ?? 45 88 83", id_param_index=0),
+        FunctionCommenter("PrintPlayerLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 45 38 7E ?? 0F 83"),
 
         FunctionCommenter("Common::Configuration::ConfigBase.GetConfigOption", configOptions, quotes=False),
 

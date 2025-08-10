@@ -39,14 +39,14 @@ foreach (var selectedLangStr in options.Languages!)
     {
         if (langStr == selectedLangStr)
         {
-            WriteRows<Addon>(lang, langStr, (row) => (row.RowId, row.Text.ToString()));
-            WriteRows<Lumina.Excel.Sheets.Error>(lang, langStr, (row) => (row.RowId, row.Unknown0.ToString()));
-            WriteRows<Lobby>(lang, langStr, (row) => (row.RowId, row.Text.ToString()));
-            WriteRows<LogMessage>(lang, langStr, (row) => (row.RowId, row.Text.ToString()));
-            WriteRows<MainCommand>(lang, langStr, (row) => (row.RowId, row.Name.ToString()));
-            WriteRows<Quest>(lang, langStr, (row) => (row.RowId - ushort.MaxValue, row.Name.ToString()));
-            WriteRows<Item>(lang, langStr, (row) => row.RowId == 0 ? null : (row.RowId, row.Name.ToString()));
-            WriteRows<Status>(lang, langStr, (row) => row.RowId == 0 ? null : (row.RowId, row.Name.ToString()));
+            WriteRows<Addon>(lang, langStr, (row) => (row.RowId, row.Text.ToMacroString()));
+            WriteRows<Lumina.Excel.Sheets.Error>(lang, langStr, (row) => (row.RowId, row.Unknown0.ToMacroString()));
+            WriteRows<Lobby>(lang, langStr, (row) => (row.RowId, row.Text.ToMacroString()));
+            WriteRows<LogMessage>(lang, langStr, (row) => (row.RowId, row.Text.ToMacroString()));
+            WriteRows<MainCommand>(lang, langStr, (row) => (row.RowId, row.Name.ToMacroString()));
+            WriteRows<Quest>(lang, langStr, (row) => (row.RowId - ushort.MaxValue, row.Name.ToMacroString()));
+            WriteRows<Item>(lang, langStr, (row) => row.RowId == 0 ? null : (row.RowId, row.Name.ToMacroString()));
+            WriteRows<Status>(lang, langStr, (row) => row.RowId == 0 ? null : (row.RowId, row.Name.ToMacroString()));
             break;
         }
     }
