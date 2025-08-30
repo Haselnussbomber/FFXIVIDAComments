@@ -132,6 +132,7 @@ def main() -> None:
         FunctionCommenter("Client::Game::InventoryManager.GetInventoryContainer", inventoryTypes, quotes=False),
 
         FunctionCommenter("Client::Game::Conditions.SetCondition", conditions, quotes=False),
+        FunctionCommenter("Client::Game::Conditions.HasPermission", {}),
 
         FunctionCommenter("Client::Game::Character::BattleChara.HasStatus", statuses, quotes=False, pattern="E8 ?? ?? ?? ?? 38 43 2D"),
         FunctionCommenter("Client::Game::StatusManager.HasStatus", statuses, quotes=False),
