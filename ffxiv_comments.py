@@ -95,10 +95,11 @@ def main() -> None:
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<string>", logmessageRows),
         FunctionCommenter("Client::Game::BattleLog.SomeFormatLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? C6 43 34 03"),
         FunctionCommenter("Client::Game::BattleLog.SomeShowBattleCharaLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 32 C0 EB 59"),
-        FunctionCommenter("Client::Game::InstanceContent::ContentDirector.ShowLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 80 A4 FB"),
+        FunctionCommenter("Client::Game::InstanceContent::ContentDirector.ShowLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? EB ?? 44 0F B7 05"),
         FunctionCommenter("Client::Game::BattleLog.AddActionLogMessage", logmessageRows, id_param_index=0),
         FunctionCommenter("AnotherShowLogMessage", logmessageRows, pattern="E9 ?? ?? ?? ?? 45 88 83", id_param_index=0),
         FunctionCommenter("PrintPlayerLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 45 38 7E ?? 0F 83"),
+        FunctionCommenter("Client::Game::WKS::WKSMechaEventModule.PrintLogMessage<int>", logmessageRows),
 
         FunctionCommenter("Common::Configuration::ConfigBase.GetConfigOption", configOptions, quotes=False),
 
@@ -114,6 +115,7 @@ def main() -> None:
         FunctionCommenter("Client::Game::QuestManager.IsQuestComplete1", quests),
         FunctionCommenter("Client::Game::QuestManager.GetQuestSequence", quests, id_param_index=0),
         FunctionCommenter("Client::Game::UI::UIState.IsUnlockLinkUnlockedOrQuestCompleted", quests),
+        FunctionCommenter("Client::Game::UI::UIState.IsUnlockLinkUnlocked", {}),
 
         FunctionCommenter("Client::System::Input::InputData.IsInputIdDown", inputIds),
         FunctionCommenter("Client::System::Input::InputData.IsInputIdPressed", inputIds),
@@ -210,12 +212,10 @@ def get_addon_names():
 
     start_ea = inst.ops[1].addr
 
-    end_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, "4C 8B CF 48 8D 1D ?? ?? ?? ??", 16, idaapi.SEARCH_DOWN)
+    end_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, "48 8D 1D ?? ?? ?? ?? 45 33 D2", 16, idaapi.SEARCH_DOWN)
     if end_ea == idaapi.BADADDR:
         print("Could not find addon names signature")
         return
-
-    end_ea += 3
 
     inst = idautils.DecodeInstruction(end_ea)
     if not inst:
@@ -241,7 +241,7 @@ def get_addon_names():
     ea = start_ea
     while ida_bytes.get_qword(ea) != 0:
         list[str(i)] = read_cstr(ida_bytes.get_qword(ea))
-        ea += 8 * 3
+        ea += 8 * 2
         i += 1
         if ea >= end_ea:
             break
