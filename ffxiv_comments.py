@@ -93,6 +93,7 @@ def main() -> None:
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<uint,uint>", logmessageRows),
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<uint,uint,uint>", logmessageRows),
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<string>", logmessageRows),
+        FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessageSourceTarget", logmessageRows),
         FunctionCommenter("Client::Game::BattleLog.SomeFormatLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? C6 43 34 03"),
         FunctionCommenter("Client::Game::BattleLog.SomeShowBattleCharaLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? 32 C0 EB 59"),
         FunctionCommenter("Client::Game::InstanceContent::ContentDirector.ShowLogMessage", logmessageRows, pattern="E8 ?? ?? ?? ?? EB ?? 44 0F B7 05"),
