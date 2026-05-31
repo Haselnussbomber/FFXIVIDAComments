@@ -155,7 +155,7 @@ def main() -> None:
         FunctionCommenter("Client::Game::CurrencyManager.GetItemCount", items),
         FunctionCommenter("Client::Game::CurrencyManager.GetItemMaxCount", items),
 
-        FunctionCommenter("ExecuteCommand", {}, id_param_index=0),
+        FunctionCommenter("Client::Game::GameMain.ExecuteCommand", {}, id_param_index=0),
         FunctionCommenter("Client::UI::Misc::FlagStatusModule_GetUIFlag", {}),
         FunctionCommenter("Client::UI::Misc::FlagStatusModule_SetUIFlag", {}),
 
