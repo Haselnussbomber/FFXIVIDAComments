@@ -2,7 +2,6 @@ import os
 import json
 import ida_allins
 import ida_bytes
-import ida_enum
 import ida_hexrays
 import ida_nalt
 import ida_segment
@@ -20,7 +19,23 @@ language = "en"
 
 # ---- /CONFIG ----
 
-text_segment = ida_segment.get_segm_by_name('.text')
+text_segment_start_ea = idc.BADADDR
+text_segment_end_ea = idc.BADADDR
+
+if idaapi.IDA_SDK_VERSION < 940:
+    text_segment = ida_segment.get_segm_by_name('.text')
+    if text_segment:
+        text_segment_start_ea = text_segment.start_ea
+        text_segment_end_ea = text_segment.end_ea
+else:
+    text_segment_start_ea = ida_segment.get_segment_ea_by_name('.text')
+    text_segment_end_ea = ida_segment.get_next_segment_ea(text_segment_start_ea)
+
+def find_text_sig_ea(sig: str):
+    if idaapi.IDA_SDK_VERSION < 900:
+        return idaapi.find_binary(text_segment_start_ea, text_segment_end_ea, sig, 16, idaapi.SEARCH_DOWN)
+    else:
+        return ida_bytes.find_bytes(sig, text_segment_start_ea, text_segment_end_ea)
 
 def main() -> None:
     addonRows = read_json(os.path.join(dataPath, language, "Addon.json"))
@@ -190,7 +205,7 @@ def read_json(filename):
     return list
 
 def get_addon_names():
-    start_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, "48 8D 3D ?? ?? ?? ?? 4C 8B DA", 16, idaapi.SEARCH_DOWN)
+    start_ea = find_text_sig_ea("48 8D 3D ?? ?? ?? ?? 4C 8B DA")
     if start_ea == idaapi.BADADDR:
         print("Could not find addon names signature")
         return
@@ -214,7 +229,7 @@ def get_addon_names():
 
     start_ea = inst.ops[1].addr
 
-    end_ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, "48 8D 1D ?? ?? ?? ?? 45 33 D2", 16, idaapi.SEARCH_DOWN)
+    end_ea = find_text_sig_ea("48 8D 1D ?? ?? ?? ?? 45 33 D2")
     if end_ea == idaapi.BADADDR:
         print("Could not find addon names signature")
         return
@@ -256,29 +271,44 @@ def read_cstr(ea):
     name_bytes = ida_bytes.get_strlit_contents(ea, size, ida_nalt.STRTYPE_C)
     return name_bytes.decode("UTF-8")
 
-def get_enum_member_names(enum_name: str) -> dict:
+def get_enum_member_names(name: str) -> dict:
     def remove_until_first_dot(s):
         return s.split('.', 1)[1] if '.' in s else s
 
     values = {}
 
-    for enum_idx in range(ida_enum.get_enum_qty()):
-        enum = ida_enum.getn_enum(enum_idx)
-        if enum_name != ida_enum.get_enum_name(enum):
-            continue
+    if idaapi.IDA_SDK_VERSION < 900:
+        import ida_enum
+        for enum_idx in range(ida_enum.get_enum_qty()):
+            enum = ida_enum.getn_enum(enum_idx)
+            if name != ida_enum.get_enum_name(enum):
+                continue
 
-        cur_member_value = ida_enum.get_first_enum_member(enum, 0xffffffff)
-        last_member_value = ida_enum.get_last_enum_member(enum, 0xffffffff)
-        while True:
-            cur_member_id = ida_enum.get_enum_member(enum, cur_member_value, -1, 0xffffffff)
-            member_value = ida_enum.get_enum_member_value(cur_member_id)
+            cur_member_value = ida_enum.get_first_enum_member(enum, 0xffffffff)
+            last_member_value = ida_enum.get_last_enum_member(enum, 0xffffffff)
+            while True:
+                cur_member_id = ida_enum.get_enum_member(enum, cur_member_value, -1, 0xffffffff)
+                member_value = ida_enum.get_enum_member_value(cur_member_id)
 
-            values[str(member_value)] = remove_until_first_dot(ida_enum.get_enum_member_name(cur_member_id))
+                values[str(member_value)] = remove_until_first_dot(ida_enum.get_enum_member_name(cur_member_id))
 
-            if cur_member_value == last_member_value:
-                break
+                if cur_member_value == last_member_value:
+                    break
 
-            cur_member_value = ida_enum.get_next_enum_member(enum, cur_member_value, 0xffffffff)
+                cur_member_value = ida_enum.get_next_enum_member(enum, cur_member_value, 0xffffffff)
+    else:
+        import ida_typeinf
+        tif = ida_typeinf.get_idati().get_named_type(name)
+        if not tif:
+            print(f"Enum {name} not found")
+            return {}
+
+        if not tif.is_enum():
+            print(f"Type {name} is not an enum")
+            return {}
+
+        for idx, edm in enumerate(tif.iter_enum()):
+            values[str(edm.value)] = remove_until_first_dot(edm.name)
 
     return values
 
@@ -324,11 +354,11 @@ class FunctionCommenter:
 
     def __post_init__(self):
         if self.pattern:
-            self.ea = idaapi.find_binary(text_segment.start_ea, text_segment.end_ea, self.pattern, 16, idaapi.SEARCH_DOWN)
+            self.ea = find_text_sig_ea(self.pattern)
             if idc.get_operand_type(self.ea, 0) in [idc.o_near, idc.o_far]:
                 self.ea = idc.get_operand_value(self.ea, 0)
         else:
-            self.ea = idc.get_name_ea(text_segment.start_ea, self.name)
+            self.ea = idc.get_name_ea(text_segment_start_ea, self.name)
 
     def get_comment(self, id: int):
         if id in self.datalist:
@@ -379,7 +409,7 @@ class FunctionCommenter:
                     idc.set_cmt(call['ea'], self.get_comment(id), 0)
 
 def update_lua_functions():
-    ea = idc.get_name_ea(text_segment.start_ea, "Common::Lua::LuaState.SetFunctionField")
+    ea = idc.get_name_ea(text_segment_start_ea, "Common::Lua::LuaState.SetFunctionField")
     if ea == idaapi.BADADDR:
         print("Couldn't find Common::Lua::LuaState_SetFunctionField")
         return
