@@ -88,7 +88,7 @@ def main() -> None:
 
         FunctionCommenter("Client::UI::Agent::AgentLobby.GetLobbyText", lobbyRows),
 
-        FunctionCommenter("Client::UI::Shell::RaptureShellModule.PrintLogMessage", logmessageRows),
+        FunctionCommenter("Client::UI::Shell::RaptureShellModule.ShowLogMessage", logmessageRows),
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage", logmessageRows),
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<uint>", logmessageRows),
         FunctionCommenter("Client::UI::Misc::RaptureLogModule.ShowLogMessage<uint,uint>", logmessageRows),
